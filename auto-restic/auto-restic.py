@@ -19,7 +19,10 @@ BASE_DIR = os.path.dirname(__file__)
 SCHEDULER = BackgroundScheduler()
 SCHEDULER.start()
 
-def run_backup(config, config_path):
+def run_backup(config: dict, config_path: str):
+	'''
+	Run the backup.
+	'''
 	home = str(Path.home())
 	repo = config['restic-repo']
 	pfile = os.path.join(BASE_DIR, config['restic-password-file'])
@@ -56,7 +59,10 @@ def run_backup(config, config_path):
 	logging.info(f'Backup completed! Next backup scheduled for {next_backup_dt}')
 
 
-def clean_repository(config):
+def clean_repository(config: dict):
+	'''
+	Prune restic repository after backup.
+	'''
 	repo = config['restic-repo']
 	pfile = os.path.join(BASE_DIR, config['restic-password-file'])
 	keep_backups_for = config['keep-backups']
@@ -70,12 +76,18 @@ def clean_repository(config):
 	os.system(cmd + ' --dry-run')
 
 
-def update_config(new_config, config_path):
+def update_config(new_config: dict, config_path: str):
+	'''
+	Dump updated config to disk.
+	'''
 	with open(config_path, 'w') as config_file:
 		json.dump(new_config, config_file, indent=4)
 
 
-def load_config(config_path):
+def load_config(config_path: str):
+	'''
+	Load config from path.
+	'''
 	if not os.path.isfile(config_path):
 		with open(config_path, 'w') as config_file:
 			json.dump(create_config(), config_file, indent=4)
@@ -155,7 +167,9 @@ if __name__ == '__main__':
 	log = os.path.join('backup.log')
 	logging.getLogger('apscheduler').setLevel(logging.WARNING)
 	logging.basicConfig(
-		filename=log, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+		filename=log, level=logging.DEBUG,
+		format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S'
+	)
 
 	conf = load_config(CONFIG_DIR)
 	last_backup = conf['last-backed-up']
