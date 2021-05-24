@@ -28,7 +28,7 @@ config = {
 
 - `backup-frequency`: How often you want to run the backup, in seconds. You can use expressions like in the example.
 
-- `keep-backups`: How long to keep the backups for. See [restic's documentation for --keep-within duration](https://restic.readthedocs.io/en/stable/060_forget.html#removing-snapshots-according-to-a-policy).
+- `keep-backups`: How long to keep the backups for. See [restic's documentation](https://restic.readthedocs.io/en/stable/060_forget.html#removing-snapshots-according-to-a-policy) for `--keep-within duration`.
 
 - `exclude-file`: Text file containing the files that will be excluded from the backup, one per line.
 
