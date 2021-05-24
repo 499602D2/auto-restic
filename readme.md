@@ -8,17 +8,14 @@ An example configuration file looks like this:
 
 ```
 config = {
-    'restic-repo': 'rclone:Dropbox:Restic',
-    'restic-password-file': 'restic-password.txt',
-    'backup-frequency': 3600*12,
-    'keep-backups': '1y0m0d0h',
-    'exclude-file': 'excludes.txt',
-    'last-backed-up': None,
-
-    'backup-paths': [
-        "foo/bar",
-        "important/files"
-    ]
+    "restic-repo": "path/to/restic/backup/repository",
+    "restic-password-file": "configuration/restic-password.txt",
+    "backup-file": "configuration/paths-to-backup.txt",
+    "exclude-file": "configuration/paths-to-exclude.txt",
+    "backup-frequency": 21600,
+    "keep-backups": -1,
+    "backup-on-start": true,
+    "last-backed-up": 1234567890
 }
 ```
 
@@ -26,15 +23,17 @@ config = {
 
 - `restic-password-file`: The path to the text file containing the passoword to your restic repository.
 
-- `backup-frequency`: How often you want to run the backup, in seconds. You can use expressions like in the example.
+- `backup-file`: Text file containing the paths that will be backed up, one per line.
 
-- `keep-backups`: How long to keep the backups for. See [restic's documentation](https://restic.readthedocs.io/en/stable/060_forget.html#removing-snapshots-according-to-a-policy) for `--keep-within duration`.
+- `exclude-file`: Text file containing the paths that will be excluded from the backup, one per line.
 
-- `exclude-file`: Text file containing the files that will be excluded from the backup, one per line.
+- `backup-frequency`: How often you want to run the backup, in seconds.
+
+- `keep-backups`: How long to keep the backups for. See [restic's documentation](https://restic.readthedocs.io/en/stable/060_forget.html#removing-snapshots-according-to-a-policy) for `--keep-within duration`. Set to -1 to never remove backups.
+
+- `backup-on-start`: Set this to true if you want the script to run a backup every time it's started.
 
 - `last-backed-up`: Keeps track of when the last backup was performed, so a backup won't be started if you restart the script immediately after a backup.
-
-- `backup-paths`: List of paths that will be backed up. Could, and probably should, be a text file.
 
 
 ## Running

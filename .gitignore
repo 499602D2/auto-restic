@@ -1,5 +1,4 @@
 .DS_Store
-auto-restic/backup.log
-auto-restic/excludes.txt
-auto-restic/restic-config.json
-auto-restic/restic-password.txt
+auto-restic/__pycache__
+auto-restic/configuration
+auto-restic/logs
