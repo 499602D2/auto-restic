@@ -90,7 +90,8 @@ if __name__ == '__main__':
 
 	# log path
 	log = os.path.join("logs", "backup.log")
-	os.makedirs("logs")
+	if not os.path.isdir("logs"):
+		os.makedirs("logs")
 
 	# init log (disk)
 	logging.getLogger('apscheduler').setLevel(logging.WARNING)
