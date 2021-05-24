@@ -37,4 +37,6 @@ config = {
 
 
 ## Running
-The simplest way to run the script is either through screen on nohup. With nohup, running the program is as simple as `nohup python3 auto-restic.py &`.
+You should run the program once in the foreground to create a configuration: this can be done with `python3 auto-restic.py`.
+
+The simplest way to run the script in the background is either through screen on nohup. With nohup, running the program is as simple as `nohup python3 auto-restic.py &`.
