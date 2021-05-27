@@ -24,9 +24,9 @@ def run_backup(config: dict, config_path: str):
 	Run the backup.
 	'''
 	home = str(Path.home())
-	bfile = Path(config["backup-file"])
-	efile = Path(config["exclude-file"])
-	pfile = Path(config['restic-password-file'])
+	bfile = Path(os.path.join(BASE_DIR, config["backup-file"]))
+	efile = Path(os.path.join(BASE_DIR, config["exclude-file"]))
+	pfile = Path(os.path.join(BASE_DIR, config['restic-password-file']))
 
 	# escape spaces in repo path
 	repo = Path(config['restic-repo'].replace(" ", "\ "))
@@ -55,6 +55,7 @@ def run_backup(config: dict, config_path: str):
 	)
 
 	logging.info(f'Backup completed! Next backup scheduled for {backup_dt}')
+	print("\n✅ Backup completed! You can now exit the program.")
 
 
 def clean_repository(config: dict):
@@ -89,9 +90,9 @@ if __name__ == '__main__':
 	SCHEDULER.add_listener(apscheduler_event_listener, EVENT_JOB_ERROR)
 
 	# log path
-	log = os.path.join("logs", "backup.log")
-	if not os.path.isdir("logs"):
-		os.makedirs("logs")
+	log = os.path.join(BASE_DIR, "logs", "backup.log")
+	if not os.path.isdir(os.path.join(BASE_DIR, "logs")):
+		os.makedirs(OS.PATH.JOIN(BASE_DIR, "logs"))
 
 	# init log (disk)
 	logging.getLogger('apscheduler').setLevel(logging.WARNING)

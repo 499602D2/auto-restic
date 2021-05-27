@@ -3,6 +3,8 @@ import sys
 
 import ujson as json
 
+BASE_DIR = os.path.dirname(__file__)
+
 def create_config():
 	'''
 	Create a new configuration and associated files.
@@ -12,9 +14,9 @@ def create_config():
 	repo_path = input('restic repository path: ')
 
 	# ask for password file path and password
-	pw_path = input('restic password file path (restic-password.txt): ')
+	pw_path = input('restic password file path (configuration/restic-password.txt): ')
 	if pw_path == "":
-		pw_path = os.path.join("configuration", "restic-password.txt")
+		pw_path = os.path.join(BASE_DIR, "configuration", "restic-password.txt")
 
 	with open(pw_path, 'w') as pw_file:
 		pw_file.write(input('Enter restic repository password: '))
@@ -38,29 +40,21 @@ def create_config():
 	paths_to_exclude = []
 	inp = input('\nAdd paths/files to EXCLUDE (enter when done): ')
 	while inp != '':
-		if ' ' in inp:
-			inp_spl = inp.split('/')
-			for enum, split in enumerate(inp_spl):
-				if ' ' in split:
-					inp_spl[enum] = f"'{split}'"
-
-			inp = '/'.join(inp_spl)
-
 		paths_to_exclude.append(inp)
 		inp = input('Add paths/files to EXCLUDE (enter when done): ')
 
 	# write paths to file
-	backup_paths_fname = os.path.join("configuration", "paths-to-backup.txt")
+	backup_paths_fname = os.path.join(BASE_DIR, "configuration", "paths-to-backup.txt")
 	with open(backup_paths_fname, 'w') as backup_file:
 		backup_file.write("\n".join(paths_to_backup))
 
 	# create exclude file
-	exclude_paths_fname = os.path.join("configuration", "paths-to-exclude.txt")
+	exclude_paths_fname = os.path.join(BASE_DIR, "configuration", "paths-to-exclude.txt")
 	with open(exclude_paths_fname, 'w') as exclude_file:
 		exclude_file.write("\n".join(paths_to_exclude))
 
 	# backup on startup?
-	inp = input("Always backup on script startup? (y/N): ")
+	inp = input("\nAlways backup on script startup? (y/N): ")
 	backup_on_start = bool(inp.lower() in ('y', 'yes'))
 
 	# creat config
