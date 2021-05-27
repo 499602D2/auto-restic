@@ -105,7 +105,11 @@ if __name__ == '__main__':
 	last_backup = conf['last-backed-up']
 
 	if last_backup is None or conf['backup-on-start']:
-		logging.info('Backup has never been run: running now...')
+		if conf['backup-on-start']:
+			logging.info('Backup configured to run on program start: running now...')
+		else:
+			logging.info('Backup has never been run: running now...')
+
 		run_backup(conf, CONFIG_DIR)
 	else:
 		next_backup_unix_ts = int(last_backup) + int(conf['backup-frequency'])
