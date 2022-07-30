@@ -7,6 +7,7 @@ import sys
 import time
 import logging
 import datetime
+import argparse
 
 from pathlib import Path
 
@@ -86,6 +87,18 @@ def apscheduler_event_listener(event):
 
 
 if __name__ == "__main__":
+	# setup argparse
+	parser = argparse.ArgumentParser('auto-restic.py')
+	parser.add_argument(
+		'--run-once', dest='run_once',
+		action='store_true',
+		help='Specify to only run the program once'
+	)
+
+	# set defaults, parse
+	parser.set_defaults(run_once=False)
+	args = parser.parse_args()
+
 	CONFIG_DIR = os.path.join(os.path.dirname(__file__), "configuration" , "restic-config.json")
 	SCHEDULER.add_listener(apscheduler_event_listener, EVENT_JOB_ERROR)
 
@@ -125,8 +138,9 @@ if __name__ == "__main__":
 
 			logging.info(f"Next backup scheduled for {next_backup_dt}")
 
-	while True:
-		try:
-			time.sleep(3600)
-		except KeyboardInterrupt:
-			sys.exit("Got ctrl+c: exiting...")
+	if not args.run_once:
+		while True:
+			try:
+				time.sleep(3600)
+			except KeyboardInterrupt:
+				sys.exit("Got ctrl+c: exiting...")
