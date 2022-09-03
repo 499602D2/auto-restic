@@ -5,7 +5,7 @@ import sys
 
 import ujson as json
 
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = Path(os.path.dirname(__file__))
 
 
 def create_config():
