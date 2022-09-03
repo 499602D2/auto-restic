@@ -16,61 +16,58 @@ from config import load_config, update_config
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.events import EVENT_JOB_ERROR
 
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = Path(os.path.dirname(__file__))
+CONFIG_DIR = BASE_DIR / "configuration" / "restic-config.json"
+CONFIG = load_config(CONFIG_DIR)
+
 SCHEDULER = BackgroundScheduler()
 SCHEDULER.start()
 
-def run_backup(config: dict, config_path: str):
+
+def run_backup():
 	"""
 	Run the backup.
 	"""
-	home = str(Path.home())
-	bfile = Path(os.path.join(BASE_DIR, config["backup-file"]))
-	efile = Path(os.path.join(BASE_DIR, config["exclude-file"]))
-	pfile = Path(os.path.join(BASE_DIR, config["restic-password-file"]))
+	backup_file = BASE_DIR / CONFIG["backup-file"]
+	exclude_file = BASE_DIR / CONFIG["exclude-file"]
+	password_file = BASE_DIR / CONFIG["restic-password-file"]
 
-	# escape spaces in repo path
-	repo = Path(config["restic-repo"].replace(" ", "\ "))
+	# Escape spaces in repo path
+	repo = Path(CONFIG["restic-repo"].replace(" ", "\ "))
 
-	cmd = f"restic -r {repo} backup --files-from {bfile} --verbose --password-file {pfile}"
-	if config["exclude-file"] is not None:
-		cmd += f" --exclude-file={efile}"
+	# Build the command
+	cmd = f"restic -r {repo} backup --files-from {backup_file} --verbose --password-file {password_file}"
+	if CONFIG["exclude-file"] is not None:
+		cmd += f" --exclude-file={exclude_file}"
 
-	# run command and clean repository
+	# Run command and clean repository
 	os.system(cmd)
-	clean_repository(config)
+	clean_repository()
 
-	# update config with update time
-	config["last-backed-up"] = int(time.time())
-	update_config(config, config_path)
+	# Update config with update time
+	CONFIG["last-backed-up"] = int(time.time())
 
-	# schedule next backup
-	backup_every_sec = int(config["backup-frequency"])
+	# Datetime of next backup
+	backup_dt = datetime.datetime.fromtimestamp(
+		int(time.time()) + int(CONFIG["backup-frequency"]))
 
-	backup_dt = datetime.datetime.fromtimestamp(int(time.time()) + backup_every_sec)
-	SCHEDULER.add_job(
-		run_backup,
-		"date", run_date=backup_dt,
-		args=[ load_config(config_path=CONFIG_DIR), CONFIG_DIR ],
-		id=f"backup-{int(time.time()) + backup_every_sec}"
-	)
-
+	SCHEDULER.add_job(run_backup, "date", run_date=backup_dt)
 	logging.info(f"Backup completed! Next backup scheduled for {backup_dt}")
-	print("\n✅ Backup completed! You can now exit the program.")
 
 
-def clean_repository(config: dict):
+def clean_repository():
 	"""
 	Prune restic repository after backup.
 	"""
-	repo = config["restic-repo"]
-	pfile = os.path.join(BASE_DIR, config["restic-password-file"])
-	keep_backups_for = config["keep-backups"]
+	repo = CONFIG["restic-repo"]
+	password_file = BASE_DIR / CONFIG["restic-password-file"]
+	keep_backups_for = CONFIG["keep-backups"]
 
 	if keep_backups_for not in ("-1", -1):
-		cmd = f"restic -r {repo} forget --keep-within {keep_backups_for} --prune --password-file {pfile}"
+		cmd = f"restic -r {repo} forget --keep-within {keep_backups_for} --prune --password-file {password_file}"
 	else:
-		logging.info("Backups configured to be kept forever: not removing or pruning.")
+		logging.info(
+			"Backups configured to be kept forever: not removing or pruning.")
 		return
 
 	os.system(cmd + " --dry-run")
@@ -81,61 +78,58 @@ def apscheduler_event_listener(event):
 	Listens to exceptions coming in from apscheduler"s threads.
 	"""
 	if event.exception:
-		logging.critical(f"Error: scheduled job raised an exception: {event.exception}")
+		logging.critical(
+			f"Error: scheduled job raised an exception: {event.exception}")
 		logging.critical("Exception traceback follows:")
 		logging.critical(event.traceback)
 
 
 if __name__ == "__main__":
-	# setup argparse
-	parser = argparse.ArgumentParser('auto-restic.py')
-	parser.add_argument(
-		'--run-once', dest='run_once',
-		action='store_true',
-		help='Specify to only run the program once'
-	)
+	# Setup argparse
+	parser = argparse.ArgumentParser("auto-restic.py")
+	parser.add_argument("--run-once",
+		dest="run_once",
+		action="store_true",
+		help="Specify to only run the program once")
 
-	# set defaults, parse
+	# Set defaults, parse
 	parser.set_defaults(run_once=False)
 	args = parser.parse_args()
 
-	CONFIG_DIR = os.path.join(os.path.dirname(__file__), "configuration" , "restic-config.json")
+	# Listen for exceptions raised by events
 	SCHEDULER.add_listener(apscheduler_event_listener, EVENT_JOB_ERROR)
 
-	# log path
-	log = os.path.join(BASE_DIR, "logs", "backup.log")
-	if not os.path.isdir(os.path.join(BASE_DIR, "logs")):
-		os.makedirs(os.path.join(BASE_DIR, "logs"))
+	# Log path
+	log = BASE_DIR / "logs" / "backup.log"
+	if not Path(BASE_DIR / "logs").is_dir():
+		Path(BASE_DIR / "logs").mkdir()
 
-	# init log (disk)
+	# Init log (disk)
 	logging.getLogger("apscheduler").setLevel(logging.WARNING)
-	logging.basicConfig(
-		filename=log, level=logging.DEBUG,
-		format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S"
-	)
+	logging.basicConfig(filename=str(log),
+		level=logging.DEBUG,
+		format="%(asctime)s %(message)s",
+		datefmt="%d/%m/%Y %H:%M:%S")
 
-	conf = load_config(CONFIG_DIR)
-	last_backup = conf["last-backed-up"]
+	last_backup = CONFIG["last-backed-up"]
 
-	if last_backup is None or conf["backup-on-start"]:
-		if conf["backup-on-start"]:
-			logging.info("Backup configured to run on program start: running now...")
+	if last_backup is None or CONFIG["backup-on-start"]:
+		if CONFIG["backup-on-start"]:
+			logging.info(
+				"Backup configured to run on program start: running now...")
 		else:
 			logging.info("Backup has never been run: running now...")
 
-		run_backup(conf, CONFIG_DIR)
+		run_backup()
 	else:
-		next_backup_unix_ts = int(last_backup) + int(conf["backup-frequency"])
+		next_backup_unix_ts = int(last_backup) + int(
+			CONFIG["backup-frequency"])
 		next_backup_dt = datetime.datetime.fromtimestamp(next_backup_unix_ts)
 
 		if next_backup_unix_ts <= int(time.time()):
-			run_backup(conf, CONFIG_DIR)
+			run_backup()
 		else:
-			SCHEDULER.add_job(
-				run_backup,
-				"date", run_date=next_backup_dt,
-				args=[load_config(config_path=CONFIG_DIR), CONFIG_DIR], id=f"backup-{next_backup_unix_ts}")
-
+			SCHEDULER.add_job(run_backup, "date", run_date=next_backup_dt)
 			logging.info(f"Next backup scheduled for {next_backup_dt}")
 
 	if not args.run_once:
@@ -143,4 +137,8 @@ if __name__ == "__main__":
 			try:
 				time.sleep(3600)
 			except KeyboardInterrupt:
+				update_config(CONFIG, CONFIG_DIR)
 				sys.exit("Got ctrl+c: exiting...")
+
+	# Save config on shutdown
+	update_config(CONFIG, CONFIG_DIR)
