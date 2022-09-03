@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 import sys
 
 import ujson as json
@@ -103,6 +104,9 @@ def load_config(config_path: str):
 	Load config from path.
 	"""
 	if not os.path.isfile(config_path):
+		if not os.path.isdir(Path(BASE_DIR / "configuration")):
+			Path(BASE_DIR / "configuration").mkdir()
+
 		with open(config_path, "w") as config_file:
 			try:
 				json.dump(create_config(), config_file, indent=4)
